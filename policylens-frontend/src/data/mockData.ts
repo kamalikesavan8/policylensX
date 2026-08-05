@@ -1,0 +1,195 @@
+export const mockDocuments = [
+  {
+    id: "doc_001",
+    name: "Acme Corp Privacy Policy v3.2",
+    type: "Privacy Policy",
+    uploadedAt: "2024-01-15T09:32:00Z",
+    risk: 78,
+    riskLevel: "high" as const,
+    clauses: 47,
+    status: "analyzed",
+    size: "124 KB",
+  },
+  {
+    id: "doc_002",
+    name: "SaaS Master Service Agreement",
+    type: "Contract",
+    uploadedAt: "2024-01-14T14:18:00Z",
+    risk: 42,
+    riskLevel: "medium" as const,
+    clauses: 89,
+    status: "analyzed",
+    size: "287 KB",
+  },
+  {
+    id: "doc_003",
+    name: "Vendor NDA - Meridian Tech",
+    type: "NDA",
+    uploadedAt: "2024-01-13T11:05:00Z",
+    risk: 19,
+    riskLevel: "low" as const,
+    clauses: 23,
+    status: "analyzed",
+    size: "48 KB",
+  },
+  {
+    id: "doc_004",
+    name: "GDPR Data Processing Agreement",
+    type: "DPA",
+    uploadedAt: "2024-01-12T16:44:00Z",
+    risk: 61,
+    riskLevel: "medium" as const,
+    clauses: 34,
+    status: "analyzed",
+    size: "96 KB",
+  },
+  {
+    id: "doc_005",
+    name: "Employment Terms & Conditions",
+    type: "Employment",
+    uploadedAt: "2024-01-11T08:22:00Z",
+    risk: 33,
+    riskLevel: "low" as const,
+    clauses: 56,
+    status: "analyzed",
+    size: "201 KB",
+  },
+  {
+    id: "doc_006",
+    name: "Cloud Services SLA Agreement",
+    type: "SLA",
+    uploadedAt: "2024-01-10T13:57:00Z",
+    risk: 85,
+    riskLevel: "high" as const,
+    clauses: 41,
+    status: "analyzed",
+    size: "155 KB",
+  },
+];
+
+export const mockClauses = [
+  {
+    id: "cl_001",
+    title: "Unilateral Modification of Terms",
+    text: "The Company reserves the right to modify these terms at any time without prior notice to the user. Continued use of the service constitutes acceptance of modified terms.",
+    risk: "high" as const,
+    type: "Ambiguity",
+    section: "Section 4.2",
+    confidence: 94,
+    explanation: "One-sided modification rights without notice period violates GDPR Article 7 and creates unfair contractual balance under EU consumer law.",
+  },
+  {
+    id: "cl_002",
+    title: "Perpetual Data License Grant",
+    text: "User grants Company a perpetual, irrevocable, worldwide, royalty-free license to use, reproduce, modify, and distribute user content for any purpose.",
+    risk: "high" as const,
+    type: "Ambiguity",
+    section: "Section 7.1",
+    confidence: 91,
+    explanation: "Perpetual and irrevocable license without scope limitation is disproportionate and potentially incompatible with data subject rights.",
+  },
+  {
+    id: "cl_003",
+    title: "Arbitration Waiver",
+    text: "Users waive the right to participate in class action lawsuits. All disputes must be resolved through individual arbitration.",
+    risk: "medium" as const,
+    type: "Obligation",
+    section: "Section 12.3",
+    confidence: 87,
+    explanation: "Class action waivers are unenforceable in several EU jurisdictions and California consumer contracts.",
+  },
+  {
+    id: "cl_004",
+    title: "Data Retention Period",
+    text: "Company will retain user data for a period of five (5) years following account termination for business and legal compliance purposes.",
+    risk: "medium" as const,
+    type: "Obligation",
+    section: "Section 9.4",
+    confidence: 79,
+    explanation: "5-year retention may exceed proportionality requirements under GDPR Article 5(1)(e). Legitimate basis for extended retention not specified.",
+  },
+  {
+    id: "cl_005",
+    title: "Liability Cap",
+    text: "Company liability shall not exceed the greater of $100 or the fees paid by user in the twelve months preceding the claim.",
+    risk: "medium" as const,
+    type: "Obligation",
+    section: "Section 15.2",
+    confidence: 82,
+    explanation: "Liability cap is extremely low and may not cover actual damages. Inconsistent with B2B contracting norms.",
+  },
+  {
+    id: "cl_006",
+    title: "Cookie Consent",
+    text: "By using this service, you consent to the use of cookies as described in our Cookie Policy.",
+    risk: "low" as const,
+    type: "Obligation",
+    section: "Section 2.1",
+    confidence: 71,
+    explanation: "Implicit consent mechanism. GDPR requires explicit, informed, and freely given consent for non-essential cookies.",
+  },
+];
+
+export const mockMissingClauses = [
+  { id: "m_001", title: "Data Breach Notification Procedure", required: true, regulation: "GDPR Art. 33" },
+  { id: "m_002", title: "Right to Data Portability", required: true, regulation: "GDPR Art. 20" },
+  { id: "m_003", title: "Automated Decision-Making Disclosure", required: true, regulation: "GDPR Art. 22" },
+  { id: "m_004", title: "Third-Party Sub-processor List", required: false, regulation: "GDPR Art. 28" },
+  { id: "m_005", title: "Grievance Redressal Mechanism", required: false, regulation: "Best Practice" },
+];
+
+export const mockDuplicates = [
+  {
+    id: "dup_001",
+    clause1: "Section 3.1: User shall not engage in any activity that disrupts the service...",
+    clause2: "Section 11.4: Users are prohibited from engaging in activities that interrupt or disrupt the platform...",
+    similarity: 87,
+    type: "Duplicate",
+  },
+  {
+    id: "dup_002",
+    clause1: "Section 5.2: Company may terminate this agreement for any reason with 30 days notice...",
+    clause2: "Section 14.1: Either party may cancel this contract by providing thirty (30) days written notice...",
+    similarity: 76,
+    type: "Near-Duplicate",
+  },
+  {
+    id: "dup_003",
+    clause1: "Section 6.3: Governing law shall be the laws of the State of Delaware...",
+    clause2: "Section 13.2: This agreement is governed by California law...",
+    similarity: 61,
+    type: "Contradiction",
+  },
+];
+
+export const mockObligations = [
+  { id: "ob_001", entity: "Company", modal: "Shall", strength: "Mandatory", action: "Notify users within 72 hours of data breach", clause: "Section 8.1", risk: "high" as const },
+  { id: "ob_002", entity: "User", modal: "Must", strength: "Mandatory", action: "Maintain account security and not share credentials", clause: "Section 3.4", risk: "medium" as const },
+  { id: "ob_003", entity: "Company", modal: "May", strength: "Permissive", action: "Share aggregated anonymized data with third parties", clause: "Section 7.3", risk: "medium" as const },
+  { id: "ob_004", entity: "User", modal: "Shall not", strength: "Prohibitive", action: "Reverse engineer or decompile software", clause: "Section 11.2", risk: "low" as const },
+  { id: "ob_005", entity: "Company", modal: "Will", strength: "Mandatory", action: "Provide 99.9% uptime SLA for enterprise customers", clause: "Section 16.1", risk: "low" as const },
+];
+
+export const riskDistributionData = [
+  { name: "Low (0-33)", value: 28, fill: "#22c55e" },
+  { name: "Medium (34-66)", value: 45, fill: "#f59e0b" },
+  { name: "High (67-100)", value: 27, fill: "#ef4444" },
+];
+
+export const uploadActivityData = [
+  { month: "Aug", uploads: 4 },
+  { month: "Sep", uploads: 7 },
+  { month: "Oct", uploads: 5 },
+  { month: "Nov", uploads: 11 },
+  { month: "Dec", uploads: 8 },
+  { month: "Jan", uploads: 14 },
+];
+
+export const riskTrendData = [
+  { month: "Aug", avg: 52 },
+  { month: "Sep", avg: 48 },
+  { month: "Oct", avg: 61 },
+  { month: "Nov", avg: 44 },
+  { month: "Dec", avg: 55 },
+  { month: "Jan", avg: 53 },
+];
