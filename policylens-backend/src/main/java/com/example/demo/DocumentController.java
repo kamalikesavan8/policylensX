@@ -11,14 +11,17 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.*;
-
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/documents")
 @CrossOrigin(origins = "*")
+
 public class DocumentController {
+    @Value("${nlp.service.url}")
+private String nlpServiceUrl;
 
     private final PolicyDocumentRepository documentRepository;
     private final ClauseRepository clauseRepository;
@@ -196,7 +199,7 @@ public ResponseEntity<byte[]> downloadPdfReport(@PathVariable Long id) throws Ex
         HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(nlpRequest, headers);
 
         Map nlpResponse = restTemplate.postForObject(
-            "http://localhost:8000/analyze/clauses", requestEntity, Map.class
+            nlpServiceUrl + "/analyze/clauses", requestEntity, Map.class
         );
         List<Map<String, Object>> clauseList = (List<Map<String, Object>>) nlpResponse.get("clauses");
 
@@ -211,7 +214,7 @@ public ResponseEntity<byte[]> downloadPdfReport(@PathVariable Long id) throws Ex
             ambiguityRequest.put("text", (String) c.get("text"));
             HttpEntity<Map<String, String>> ambiguityEntity = new HttpEntity<>(ambiguityRequest, headers);
             Map ambiguityResponse = restTemplate.postForObject(
-                "http://localhost:8000/analyze/ambiguity", ambiguityEntity, Map.class
+                nlpServiceUrl + "/analyze/ambiguity", ambiguityEntity, Map.class
             );
             clause.setAmbiguityScore(((Number) ambiguityResponse.get("ambiguityScore")).doubleValue());
 
@@ -220,7 +223,7 @@ public ResponseEntity<byte[]> downloadPdfReport(@PathVariable Long id) throws Ex
 
         // 3. Completeness check on the whole document
         Map completenessResponse = restTemplate.postForObject(
-            "http://localhost:8000/analyze/completeness", requestEntity, Map.class
+            nlpServiceUrl + "/analyze/completeness", requestEntity, Map.class
         );
         
         doc.setCompletenessScore(((Number) completenessResponse.get("completenessScore")).doubleValue());
@@ -236,7 +239,7 @@ dupRequest.put("clauses", clauseTexts);
 HttpEntity<Map<String, Object>> dupEntity = new HttpEntity<>(dupRequest, headers);
 
 Map dupResponse = restTemplate.postForObject(
-    "http://localhost:8000/analyze/duplicates", dupEntity, Map.class
+    nlpServiceUrl + "/analyze/duplicates", dupEntity, Map.class
 );
 List<Map<String, Object>> relationPairs = (List<Map<String, Object>>) dupResponse.get("pairs");
 
@@ -253,7 +256,7 @@ for (Map<String, Object> pair : relationPairs) {
 response.put("relationPairsFound", relationPairs.size());
 // 5. Obligation extraction
 Map obligationResponse = restTemplate.postForObject(
-    "http://localhost:8000/analyze/obligations", requestEntity, Map.class
+    nlpServiceUrl + "/analyze/obligations", requestEntity, Map.class
 );
 List<Map<String, Object>> obligationList = (List<Map<String, Object>>) obligationResponse.get("obligations");
 
