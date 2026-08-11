@@ -8,7 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "https://policylens-frontend.onrender.com")
 public class AuthController {
 
     private final UserRepository userRepository;

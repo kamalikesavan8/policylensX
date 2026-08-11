@@ -17,7 +17,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "https://policylens-frontend.onrender.com")
 
 public class DocumentController {
     @Value("${nlp.service.url}")
