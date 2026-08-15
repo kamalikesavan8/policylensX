@@ -74,7 +74,7 @@ public DocumentController(PolicyDocumentRepository documentRepository, ClauseRep
         }
     }
 
-    @PostMapping("/analyze-url")
+  @PostMapping("/analyze-url")
 public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
     try {
         String url = body.get("url");
@@ -82,7 +82,15 @@ public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
             .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
             .timeout(15000)
             .get();
-        String text = webPage.body().text();
+
+        // Remove navigation menus, headers, footers, and scripts/styles —
+        // these get scraped as text but are NOT policy content, and were
+        // contaminating clause counts and duplicate detection.
+        webPage.select("nav, header, footer, script, style, noscript, iframe, form, button").remove();
+
+        // Prefer a <main> or <article> tag if the page has one — usually the real content
+        org.jsoup.nodes.Element mainContent = webPage.selectFirst("main, article");
+        String text = (mainContent != null) ? mainContent.text() : webPage.body().text();
 
         // Cap extremely long pages to keep processing time reasonable
         if (text.length() > 15000) {
