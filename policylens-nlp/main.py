@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,6 +29,15 @@ class TextInput(BaseModel):
 
 class ClauseListInput(BaseModel):
     clauses: list[str]
+
+
+# --------------------------------------------------
+# ROOT / HEALTH CHECK
+# --------------------------------------------------
+
+@app.get("/")
+def root():
+    return {"status": "PolicyLens NLP service is running"}
 
 
 # --------------------------------------------------
@@ -251,16 +261,16 @@ def find_duplicates(input: ClauseListInput):
             "pairs": []
         }
 
-    # TF-IDF instead of SentenceTransformer
-    vectorizer = TfidfVectorizer(
-        stop_words="english"
-    )
-
-    embeddings = vectorizer.fit_transform(clauses)
-
-    similarity_matrix = cosine_similarity(
-        embeddings
-    )
+    try:
+        vectorizer = TfidfVectorizer(
+            stop_words="english"
+        )
+        embeddings = vectorizer.fit_transform(clauses)
+        similarity_matrix = cosine_similarity(embeddings)
+    except ValueError:
+        # Happens if every clause is only stopwords/very short —
+        # nothing meaningful to compare, so return no pairs instead of crashing.
+        return {"pairs": []}
 
     # Extract key content words
     def key_words(text):
