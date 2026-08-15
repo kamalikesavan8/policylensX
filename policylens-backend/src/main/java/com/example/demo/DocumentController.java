@@ -75,24 +75,31 @@ public DocumentController(PolicyDocumentRepository documentRepository, ClauseRep
     }
 
     @PostMapping("/analyze-url")
-    public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
-        try {
-            String url = body.get("url");
-            org.jsoup.nodes.Document webPage = org.jsoup.Jsoup.connect(url).get();
-            String text = webPage.body().text();
+public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
+    try {
+        String url = body.get("url");
+        org.jsoup.nodes.Document webPage = org.jsoup.Jsoup.connect(url)
+            .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+            .timeout(15000)
+            .get();
+        String text = webPage.body().text();
 
-            PolicyDocument doc = new PolicyDocument();
-            doc.setFileName(url);
-            doc.setExtractedText(text);
-            documentRepository.save(doc);
-            return processTextAndSave(doc, text);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "URL analysis failed: " + e.getMessage());
-            return response;
+        // Cap extremely long pages to keep processing time reasonable
+        if (text.length() > 15000) {
+            text = text.substring(0, 15000);
         }
-    }
 
+        PolicyDocument doc = new PolicyDocument();
+        doc.setFileName(url);
+        doc.setExtractedText(text);
+        documentRepository.save(doc);
+        return processTextAndSave(doc, text);
+    } catch (Exception e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "URL analysis failed: " + e.getMessage());
+        return response;
+    }
+}
     @GetMapping("/{id}/clauses")
     public List<Clause> getClauses(@PathVariable Long id) {
         return clauseRepository.findByDocumentId(id);
@@ -204,22 +211,30 @@ public ResponseEntity<byte[]> downloadPdfReport(@PathVariable Long id) throws Ex
         List<Map<String, Object>> clauseList = (List<Map<String, Object>>) nlpResponse.get("clauses");
 
         // 2. Ambiguity score per clause
-        for (Map<String, Object> c : clauseList) {
-            Clause clause = new Clause();
-            clause.setClauseNumber((Integer) c.get("clauseNumber"));
-            clause.setText((String) c.get("text"));
-            clause.setDocument(doc);
+       // 2. Ambiguity score for ALL clauses in one batch call (avoids N sequential requests)
+List<String> allClauseTexts = new ArrayList<>();
+for (Map<String, Object> c : clauseList) {
+    allClauseTexts.add((String) c.get("text"));
+}
 
-            Map<String, String> ambiguityRequest = new HashMap<>();
-            ambiguityRequest.put("text", (String) c.get("text"));
-            HttpEntity<Map<String, String>> ambiguityEntity = new HttpEntity<>(ambiguityRequest, headers);
-            Map ambiguityResponse = restTemplate.postForObject(
-                nlpServiceUrl + "/analyze/ambiguity", ambiguityEntity, Map.class
-            );
-            clause.setAmbiguityScore(((Number) ambiguityResponse.get("ambiguityScore")).doubleValue());
+Map<String, Object> batchRequest = new HashMap<>();
+batchRequest.put("clauses", allClauseTexts);
+HttpEntity<Map<String, Object>> batchEntity = new HttpEntity<>(batchRequest, headers);
 
-            clauseRepository.save(clause);
-        }
+Map batchResponse = restTemplate.postForObject(
+    nlpServiceUrl + "/analyze/ambiguity-batch", batchEntity, Map.class
+);
+List<Map<String, Object>> ambiguityResults = (List<Map<String, Object>>) batchResponse.get("results");
+
+for (int i = 0; i < clauseList.size(); i++) {
+    Map<String, Object> c = clauseList.get(i);
+    Clause clause = new Clause();
+    clause.setClauseNumber((Integer) c.get("clauseNumber"));
+    clause.setText((String) c.get("text"));
+    clause.setDocument(doc);
+    clause.setAmbiguityScore(((Number) ambiguityResults.get(i).get("ambiguityScore")).doubleValue());
+    clauseRepository.save(clause);
+}
 
         // 3. Completeness check on the whole document
         Map completenessResponse = restTemplate.postForObject(

@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,6 +27,10 @@ class TextInput(BaseModel):
 
 
 class ClauseListInput(BaseModel):
+    clauses: list[str]
+
+
+class AmbiguityBatchInput(BaseModel):
     clauses: list[str]
 
 
@@ -136,6 +139,37 @@ def score_ambiguity(input: TextInput):
         "ambiguityScore": density,
         "matchedTerms": matched
     }
+
+
+@app.post("/analyze/ambiguity-batch")
+def score_ambiguity_batch(input: AmbiguityBatchInput):
+    """
+    Scores ambiguity for MANY clauses in a single request.
+    This exists specifically to avoid making one HTTP round-trip per clause,
+    which times out on real-world documents with 100+ clauses.
+    """
+    results = []
+    for text in input.clauses:
+        text_lower = text.lower()
+        doc = nlp(text)
+        token_count = len([t for t in doc if not t.is_punct and not t.is_space])
+
+        matched = []
+        weight_sum = 0
+        for term, weight in VAGUE_TERMS.items():
+            if term in text_lower:
+                matched.append(term)
+                weight_sum += weight
+
+        density = (weight_sum / max(token_count, 10)) * 100
+        density = round(min(density, 100), 2)
+
+        results.append({
+            "ambiguityScore": density,
+            "matchedTerms": matched
+        })
+
+    return {"results": results}
 
 
 # --------------------------------------------------
