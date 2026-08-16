@@ -56,28 +56,23 @@ def hello():
 # CLAUSE SPLITTING
 # --------------------------------------------------
 
+def is_navigational(text):
+    words = text.split()
+    if len(words) < 6:
+        return False
+    titlecase_ratio = sum(1 for w in words if w[:1].isupper()) / len(words)
+    has_terminal_punct = text.rstrip().endswith((".", "!", "?"))
+    return titlecase_ratio > 0.6 and not has_terminal_punct
+
 @app.post("/analyze/clauses")
 def split_clauses(input: TextInput):
-
     doc = nlp(input.text)
-
     clauses = []
-
     for i, sent in enumerate(doc.sents):
-
         clean_text = sent.text.strip()
-
-        if len(clean_text) > 15:
-            clauses.append({
-                "clauseNumber": i + 1,
-                "text": clean_text
-            })
-
-    return {
-        "totalClauses": len(clauses),
-        "clauses": clauses
-    }
-
+        if len(clean_text) > 15 and not is_navigational(clean_text):
+            clauses.append({"clauseNumber": len(clauses) + 1, "text": clean_text})
+    return {"totalClauses": len(clauses), "clauses": clauses}
 
 # --------------------------------------------------
 # AMBIGUITY
