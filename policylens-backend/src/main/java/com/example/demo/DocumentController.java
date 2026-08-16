@@ -20,6 +20,10 @@ import java.util.*;
 @CrossOrigin(origins = "https://policylens-frontend.onrender.com")
 
 public class DocumentController {
+    private String truncate(String s, int maxLen) {
+    if (s == null) return s;
+    return s.length() > maxLen ? s.substring(0, maxLen) : s;
+}
     @Value("${nlp.service.url}")
 private String nlpServiceUrl;
 
@@ -305,11 +309,11 @@ List<Map<String, Object>> obligationList = (List<Map<String, Object>>) obligatio
 
 for (Map<String, Object> o : obligationList) {
     Obligation obligation = new Obligation();
-    obligation.setResponsibleEntity((String) o.get("responsibleEntity"));
-    obligation.setModal((String) o.get("modal"));
-    obligation.setStrength((String) o.get("strength"));
-    obligation.setAction((String) o.get("action"));
-    obligation.setSourceClause((String) o.get("sourceClause"));
+    obligation.setResponsibleEntity(truncate((String) o.get("responsibleEntity"), 250));
+    obligation.setModal(truncate((String) o.get("modal"), 250));
+    obligation.setStrength(truncate((String) o.get("strength"), 250));
+    obligation.setAction(truncate((String) o.get("action"), 250));
+    obligation.setSourceClause(truncate((String) o.get("sourceClause"), 5000));
     obligation.setDocument(doc);
     obligationRepository.save(obligation);
 }
@@ -333,7 +337,7 @@ double overallRisk = (0.35 * legalRisk) + (0.35 * complianceRisk) + (0.30 * oper
 
 List<String> reasons = new ArrayList<>();
 reasons.add("Legal Risk: " + Math.round(legalRisk) + "/100 (average clause ambiguity)");
-reasons.add("Compliance Risk: " + Math.round(complianceRisk) + "/100 (" + doc.getMissingSections().size() + " missing sections: " + String.join(", ", doc.getMissingSections()) + ")");
+reasons.add(truncate("Compliance Risk: " + Math.round(complianceRisk) + "/100 (" + doc.getMissingSections().size() + " missing sections: " + String.join(", ", doc.getMissingSections()) + ")", 500));
 reasons.add("Operational Risk: " + Math.round(operationalRisk) + "/100 (" + contradictionCount + " contradictions, " + duplicateCount + " duplicates found)");
 
 doc.setLegalRisk(Math.round(legalRisk * 100.0) / 100.0);
