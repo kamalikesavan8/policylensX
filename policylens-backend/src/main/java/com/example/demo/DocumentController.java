@@ -74,7 +74,7 @@ public DocumentController(PolicyDocumentRepository documentRepository, ClauseRep
         }
     }
 
-  @PostMapping("/analyze-url")
+ @PostMapping("/analyze-url")
 public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
     try {
         String url = body.get("url");
@@ -84,13 +84,33 @@ public Map<String, Object> analyzeUrl(@RequestBody Map<String, String> body) {
             .get();
 
         // Remove navigation menus, headers, footers, and scripts/styles —
-        // these get scraped as text but are NOT policy content, and were
-        // contaminating clause counts and duplicate detection.
+        // these get scraped as text but are NOT policy content.
         webPage.select("nav, header, footer, script, style, noscript, iframe, form, button").remove();
 
-        // Prefer a <main> or <article> tag if the page has one — usually the real content
+        String text;
+
+        // 1st choice: semantic <main> or <article> tag, if the site uses one
         org.jsoup.nodes.Element mainContent = webPage.selectFirst("main, article");
-        String text = (mainContent != null) ? mainContent.text() : webPage.body().text();
+
+        if (mainContent != null && mainContent.text().length() > 200) {
+            text = mainContent.text();
+        } else {
+            // Fallback: not every site uses semantic tags (e.g. Google's policy page).
+            // Heuristic: the real content block almost always has FAR more text
+            // than any navigation/sidebar block, so pick whichever div/section
+            // has the most text in it.
+            org.jsoup.select.Elements candidates = webPage.select("div, section, article, main");
+            org.jsoup.nodes.Element best = null;
+            int maxLen = 0;
+            for (org.jsoup.nodes.Element el : candidates) {
+                int len = el.ownText().length() + el.text().length();
+                if (len > maxLen) {
+                    maxLen = len;
+                    best = el;
+                }
+            }
+            text = (best != null && maxLen > 200) ? best.text() : webPage.body().text();
+        }
 
         // Cap extremely long pages to keep processing time reasonable
         if (text.length() > 15000) {
