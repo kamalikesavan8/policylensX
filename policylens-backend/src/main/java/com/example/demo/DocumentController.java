@@ -47,15 +47,18 @@ public DocumentController(PolicyDocumentRepository documentRepository, ClauseRep
     
 
     @PostMapping("/upload")
-    public Map<String, Object> upload(@RequestParam("file") MultipartFile file) {
-        try {
-            String text = tika.parseToString(file.getInputStream());
-            PolicyDocument doc = new PolicyDocument();
-            doc.setFileName(file.getOriginalFilename());
-            doc.setExtractedText(text);
-            documentRepository.save(doc);
-            return processTextAndSave(doc, text);
-        } catch (Exception e) {
+public Map<String, Object> upload(@RequestParam("file") MultipartFile file) {
+    try {
+        String text = tika.parseToString(file.getInputStream());
+        if (text.length() > 15000) {
+            text = text.substring(0, 15000);
+        }
+        PolicyDocument doc = new PolicyDocument();
+        doc.setFileName(file.getOriginalFilename());
+        doc.setExtractedText(text);
+        documentRepository.save(doc);
+        return processTextAndSave(doc, text);
+    } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Upload failed: " + e.getMessage());
             return response;
@@ -63,15 +66,18 @@ public DocumentController(PolicyDocumentRepository documentRepository, ClauseRep
     }
 
     @PostMapping("/analyze-text")
-    public Map<String, Object> analyzeText(@RequestBody Map<String, String> body) {
-        try {
-            String text = body.get("text");
-            PolicyDocument doc = new PolicyDocument();
-            doc.setFileName("Pasted Text");
-            doc.setExtractedText(text);
-            documentRepository.save(doc);
-            return processTextAndSave(doc, text);
-        } catch (Exception e) {
+public Map<String, Object> analyzeText(@RequestBody Map<String, String> body) {
+    try {
+        String text = body.get("text");
+        if (text != null && text.length() > 15000) {
+            text = text.substring(0, 15000);
+        }
+        PolicyDocument doc = new PolicyDocument();
+        doc.setFileName("Pasted Text");
+        doc.setExtractedText(text);
+        documentRepository.save(doc);
+        return processTextAndSave(doc, text);
+    }catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Analysis failed: " + e.getMessage());
             return response;
